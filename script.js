@@ -86,49 +86,48 @@ function sumArray(array) {
   );
   return sum;
 }
-// Function to check for blackjack and bust
+// Function to check for blackjack, bust, win and lose
 var checkConditions = function (scorePlayer, scoreComputer) {
-  // Player instant bust condition
+  // Instant win/bust conditions
   if (scorePlayer > 21) {
-    return `Player Bust!`;
+    return `Player Bust! Their total score was ${playerScore}`;
   }
-  // Computer instant bust condition
   if (scoreComputer > 21) {
     return `Computer Bust!`;
   }
-  // Player blackjack condition
   if (scorePlayer == 21) {
-    return `Player Blackjack! <br> Player: ${playerCardArray[0].name} of ${playerCardArray[0].suit} and ${playerCardArray[1].name} of ${playerCardArray[1].suit}
-    </br>
-    Computer: ${computerCardArray[0].name} of ${computerCardArray[0].suit} and ${computerCardArray[1].name} of ${computerCardArray[1].suit}
-    </br>
-    `;
+    return `Player Blackjack`;
   }
-  // Computer blackjack condition
   if (scoreComputer == 21) {
-    return `Player Blackjack! <br> Player: ${playerCardArray[0].name} of ${playerCardArray[0].suit} and ${playerCardArray[1].name} of ${playerCardArray[1].suit}
-    </br>
-    Computer: ${computerCardArray[0].name} of ${computerCardArray[0].suit} and ${computerCardArray[1].name} of ${computerCardArray[1].suit}
-    </br>`;
+    return `Computer Blackjack`;
   }
-  // First draw message
-  if (scorePlayer < 21 && scoreComputer < 21 && gameTurn == "firstDraw") {
-    return `This is the first draw <br> Player: ${playerCardArray[0].name} of ${playerCardArray[0].suit} and ${playerCardArray[1].name} of ${playerCardArray[1].suit}<br> Computer: ${computerCardArray[0].name} of ${computerCardArray[0].suit} and ${computerCardArray[1].name} of ${computerCardArray[1].suit} <br> Player please decide to hit or stand!`;
+  if (gameTurn == "Deal" && scorePlayer < 21 && scoreComputer < 21) {
+    return `These cards were dealt <br>
+    Player: ${playerCardArray[0].name} of ${playerCardArray[0].suit} and ${playerCardArray[1].name} of ${playerCardArray[1].suit}
+      <br> Computer: ${computerCardArray[0].name} of ${computerCardArray[0].suit} and ${computerCardArray[1].name} of ${computerCardArray[1].suit} 
+      <br> Player Score: ${playerScore} 
+      <br> Computer Score: ${computerScore}`;
   }
-  // Player second draw hit
-  if (gameTurn == "secondDrawHit" && scorePlayer < 21 && scoreComputer < 21) {
-    return `Player drew a ${playerCardArray[2].name} of ${playerCardArray[2].suit}, their total score is now ${playerScore} <br> Please enter hit or stand to continue`;
+  // draw condition
+  if ((scorePlayer == computerScore && gameTurn == "cpuStand") || "cpuHit") {
+    `Draw! The scores of both players are equal <br> Player Score: ${playerScore} <br> Computer Score: ${computerScore}`;
   }
-  // Player second draw stand
-  if (gameTurn == "secondDrawStand" && scorePlayer < 21 && scoreComputer < 21) {
-    return `Player chose to stand! Their score remains at ${playerScore} <br> Computer's turn to hit!`;
+  // prettier-ignore
+  if (scorePlayer < scoreComputer && gameTurn == "cpuStand" || gameTurn == "cpuHit") {
+    return `Computer wins! <br> Player Score: ${playerScore} <br> Computer Score: ${computerScore}`;
   }
+  // prettier-ignore
+  if (scorePlayer > scoreComputer && gameTurn == "cpuStand" || gameTurn == "cpuHit") {
+    return `Player wins! <br> Player Score: ${playerScore} <br> Computer Score: ${computerScore}`;
+  }
+  // prettier-ignore
 };
+// Hit function for player
 // functions - end
 // Main function - start
 var main = function (input) {
   //On submit the deck will be shuffled, and both players will be dealt two cards
-  if (gameTurn == "firstDraw" && input == "") {
+  if (gameTurn == "Deal" && input == "") {
     shuffledDeck = shuffleCards(makeDeck());
     console.log(shuffledDeck, "shuffledDeck"); // check
     // Each player will be popped two cards from deck and store into array
@@ -136,7 +135,7 @@ var main = function (input) {
     playerCardArray.push(shuffledDeck.pop());
     computerCardArray.push(shuffledDeck.pop());
     computerCardArray.push(shuffledDeck.pop());
-    console.log(playerCardArray, "PCA");
+    console.log(playerCardArray, "lPCA");
     console.log(computerCardArray, "CCA");
     // Retrieve Card Ranks from Player and CPU array & update into scoreArray
     playerScoreArray[0] = playerCardArray[0].rank;
@@ -147,27 +146,40 @@ var main = function (input) {
     playerScore = sumArray(playerScoreArray);
     computerScore = sumArray(computerScoreArray);
     console.log(playerScore, computerScore);
-    // Display message for computer and player draw
-    return checkConditions(playerScore, computerScore);
     // End of Draw Phase
+    return checkConditions(playerScore, computerScore);
   }
-  // If player chooses to hit after firstDraw
-  if (gameTurn == "firstDraw" && input == "hit") {
-    gameTurn = "secondDrawHit";
-    // Pop additional card into player array
+  // If player decides to hit after deal
+  if (gameTurn == "Deal" && input == "hit") {
+    playerHitCounter = playerHitCounter + 1;
     playerCardArray.push(shuffledDeck.pop());
-    // Retrieve card rank from new card and update into score arrray
-    playerScoreArray[2] = playerCardArray[2].rank;
-    // Sum player score after first hit, and update global variable.
+    playerScoreArray[playerHitCounter] = playerCardArray[playerHitCounter].rank;
+    console.log(playerCardArray[playerHitCounter].rank), "149";
     playerScore = sumArray(playerScoreArray);
     console.log(playerScore);
-    // Check player and computer score for blackjack/bust
-    return checkConditions(playerScore, computerScore);
+    return `Player drew a ${playerCardArray[playerHitCounter].name} of ${
+      playerCardArray[playerHitCounter].suit
+    }. <br> ${checkConditions(playerScore, computerScore)} `;
   }
-  // if player chooses to stand after firstDraw
-  if (gameTurn == "firstDraw" && input == "stand") {
-    gameTurn = "secondDrawStand";
-    return checkConditions(playerScore, computerScore);
+  // if player decides to stand after deal and CPU has to hit
+  if ((input == "stand") & (computerScore < 17)) {
+    gameTurn = "cpuHit";
+    computerCardArray.push(shuffledDeck.pop());
+    computerScoreArray[2] = computerCardArray[2].rank;
+    computerScore = sumArray(playerScoreArray);
+    console.log(computerScore, `stand<17`);
+    return `Player chose to stand. <br> Computer has to hit, and drew ${
+      computerCardArray[2].name
+    } of ${computerCardArray[2].suit} <br>
+    ${checkConditions(playerScore, computerScore)}`;
+  }
+  // If player and computer both stands.
+  if ((input == "stand") & (computerScore >= 17)) {
+    gameTurn = "cpuStand";
+    computerScore = sumArray(computerScoreArray);
+    playerScore = sumArray(playerScoreArray);
+    // prettier-ignore
+    return `Player has chosen to stand <br> Computer also stands <br> ${checkConditions(playerScore,computerScore)}`
   }
 };
 // Main function - end
@@ -177,7 +189,7 @@ var main = function (input) {
 // //Global Variables // //
 // deckArray
 var shuffledDeck = [];
-var gameTurn = "firstDraw";
+var gameTurn = "Deal";
 // These two are array of objects
 var playerCardArray = [];
 var computerCardArray = [];
@@ -185,6 +197,9 @@ var computerCardArray = [];
 var playerScoreArray = [];
 var computerScoreArray = [];
 // Two global variables for computer and player score
-var playerScore = "";
-var computerScore = "";
+var playerScore = 0;
+var computerScore = 0;
+// HitCounter
+var playerHitCounter = 1;
+var cpuHitCounter = 1;
 // Global Variables - End //
