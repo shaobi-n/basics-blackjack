@@ -1,5 +1,5 @@
-// There will be only two players. One human and one computer (for the Base solution).
-// Create a deck array
+// functions - start
+// function to create deck
 var makeDeck = function () {
   // Initialise an empty deck array
   var cardDeck = [];
@@ -55,7 +55,7 @@ var makeDeck = function () {
 var getRandomIndex = function (max) {
   return Math.floor(Math.random() * max);
 };
-// Create a deck shuffling function
+// function to shuffle deck
 var shuffleCards = function (cardDeck) {
   // Loop over the card deck array once
   var currentIndex = 0;
@@ -86,19 +86,50 @@ function sumArray(array) {
   );
   return sum;
 }
-// Function to check for blackjack
-var checkBlackJack = function (scorePlayer, scoreComputer) {
-  // prettier-ignore
-  if(scorePlayer == 21 && scoreComputer < 21)
-  return `Blackjack! Player Wins!`
-  if (scoreComputer == 21 && scorePlayer < 21)
-    return `Blackjack! Computer Wins!`;
+// Function to check for blackjack and bust
+var checkConditions = function (scorePlayer, scoreComputer) {
+  // Player instant bust condition
+  if (scorePlayer > 21) {
+    return `Player Bust!`;
+  }
+  // Computer instant bust condition
+  if (scoreComputer > 21) {
+    return `Computer Bust!`;
+  }
+  // Player blackjack condition
+  if (scorePlayer == 21) {
+    return `Player Blackjack! <br> Player: ${playerCardArray[0].name} of ${playerCardArray[0].suit} and ${playerCardArray[1].name} of ${playerCardArray[1].suit}
+    </br>
+    Computer: ${computerCardArray[0].name} of ${computerCardArray[0].suit} and ${computerCardArray[1].name} of ${computerCardArray[1].suit}
+    </br>
+    `;
+  }
+  // Computer blackjack condition
+  if (scoreComputer == 21) {
+    return `Player Blackjack! <br> Player: ${playerCardArray[0].name} of ${playerCardArray[0].suit} and ${playerCardArray[1].name} of ${playerCardArray[1].suit}
+    </br>
+    Computer: ${computerCardArray[0].name} of ${computerCardArray[0].suit} and ${computerCardArray[1].name} of ${computerCardArray[1].suit}
+    </br>`;
+  }
+  // First draw message
+  if (scorePlayer < 21 && scoreComputer < 21 && gameTurn == "firstDraw") {
+    return `This is the first draw <br> Player: ${playerCardArray[0].name} of ${playerCardArray[0].suit} and ${playerCardArray[1].name} of ${playerCardArray[1].suit}<br> Computer: ${computerCardArray[0].name} of ${computerCardArray[0].suit} and ${computerCardArray[1].name} of ${computerCardArray[1].suit} <br> Player please decide to hit or stand!`;
+  }
+  // Player second draw hit
+  if (gameTurn == "secondDrawHit" && scorePlayer < 21 && scoreComputer < 21) {
+    return `Player drew a ${playerCardArray[2].name} of ${playerCardArray[2].suit}, their total score is now ${playerScore} <br> Please enter hit or stand to continue`;
+  }
+  // Player second draw stand
+  if (gameTurn == "secondDrawStand" && scorePlayer < 21 && scoreComputer < 21) {
+    return `Player chose to stand! Their score remains at ${playerScore} <br> Computer's turn to hit!`;
+  }
 };
-
+// functions - end
+// Main function - start
 var main = function (input) {
   //On submit the deck will be shuffled, and both players will be dealt two cards
-  if (gameTurn == "firstDraw") {
-    var shuffledDeck = shuffleCards(makeDeck());
+  if (gameTurn == "firstDraw" && input == "") {
+    shuffledDeck = shuffleCards(makeDeck());
     console.log(shuffledDeck, "shuffledDeck"); // check
     // Each player will be popped two cards from deck and store into array
     playerCardArray.push(shuffledDeck.pop());
@@ -116,23 +147,36 @@ var main = function (input) {
     playerScore = sumArray(playerScoreArray);
     computerScore = sumArray(computerScoreArray);
     console.log(playerScore, computerScore);
-    // Check for blackjack for computer and player - game may terminate here
-    checkBlackJack(playerScore, computerScore);
-    // Change gameTurn to hit or stand
-    gameTurn = `hitStand1`;
     // Display message for computer and player draw
-    // prettier-ignore
-    return `Player: ${playerCardArray[0].name} of ${playerCardArray[0].suit} and ${playerCardArray[1].name} of ${playerCardArray[1].suit}
-    </br>
-    Computer: ${computerCardArray[0].name} of ${computerCardArray[0].suit} and ${computerCardArray[1].name} of ${computerCardArray[1].suit}`;
+    return checkConditions(playerScore, computerScore);
     // End of Draw Phase
   }
+  // If player chooses to hit after firstDraw
+  if (gameTurn == "firstDraw" && input == "hit") {
+    gameTurn = "secondDrawHit";
+    // Pop additional card into player array
+    playerCardArray.push(shuffledDeck.pop());
+    // Retrieve card rank from new card and update into score arrray
+    playerScoreArray[2] = playerCardArray[2].rank;
+    // Sum player score after first hit, and update global variable.
+    playerScore = sumArray(playerScoreArray);
+    console.log(playerScore);
+    // Check player and computer score for blackjack/bust
+    return checkConditions(playerScore, computerScore);
+  }
+  // if player chooses to stand after firstDraw
+  if (gameTurn == "firstDraw" && input == "stand") {
+    gameTurn = "secondDrawStand";
+    return checkConditions(playerScore, computerScore);
+  }
 };
-
+// Main function - end
 // If dealer <17 immediate hit.
 // If hand total higher than 21, immediate bust
 
 // //Global Variables // //
+// deckArray
+var shuffledDeck = [];
 var gameTurn = "firstDraw";
 // These two are array of objects
 var playerCardArray = [];
@@ -143,3 +187,4 @@ var computerScoreArray = [];
 // Two global variables for computer and player score
 var playerScore = "";
 var computerScore = "";
+// Global Variables - End //
