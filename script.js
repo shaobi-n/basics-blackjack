@@ -4,7 +4,7 @@ var makeDeck = function () {
   // Initialise an empty deck array
   var cardDeck = [];
   // Initialise an array of the 4 suits in our deck. We will loop over this array.
-  var suits = ["hearts", "diamonds", "clubs", "spades"];
+  var suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
 
   // Loop over the suits array
   var suitIndex = 0;
@@ -22,13 +22,13 @@ var makeDeck = function () {
 
       // If rank is 1, 11, 12, or 13, set cardName to the ace or face card's name
       if (cardName == 1) {
-        cardName = "ace";
+        cardName = "Ace";
       } else if (cardName == 11) {
-        cardName = "jack";
+        cardName = "Jack";
       } else if (cardName == 12) {
-        cardName = "queen";
+        cardName = "Queen";
       } else if (cardName == 13) {
-        cardName = "king";
+        cardName = "King";
       }
 
       // Create a new card with the current name, suit, and rank
@@ -101,6 +101,7 @@ var checkConditions = function (scorePlayer, scoreComputer) {
   if (scoreComputer == 21) {
     return `Computer Blackjack`;
   }
+  // First deal
   if (gameTurn == "Deal" && scorePlayer < 21 && scoreComputer < 21) {
     return `These cards were dealt <br>
     Player: ${playerCardArray[0].name} of ${playerCardArray[0].suit} and ${playerCardArray[1].name} of ${playerCardArray[1].suit}
@@ -109,20 +110,40 @@ var checkConditions = function (scorePlayer, scoreComputer) {
       <br> Computer Score: ${computerScore}`;
   }
   // draw condition
-  if ((scorePlayer == computerScore && gameTurn == "cpuStand") || "cpuHit") {
-    `Draw! The scores of both players are equal <br> Player Score: ${playerScore} <br> Computer Score: ${computerScore}`;
+  if (gameTurn == "cpuStand" || gameTurn == "cpuHit") {
+    // Draw condition
+    if (scorePlayer == computerScore) {
+      `Draw! The scores of both players are equal <br> Player Score: ${playerScore} <br> Computer Score: ${computerScore}`;
+    }
+    // Player win condition
+    if (scorePlayer < scoreComputer) {
+      return `Computer wins! <br> Player Score: ${playerScore} <br> Computer Score: ${computerScore}`;
+    }
+
+    if (scorePlayer > scoreComputer) {
+      return `Player wins! <br> Player Score: ${playerScore} <br> Computer Score: ${computerScore}`;
+    }
   }
-  // prettier-ignore
-  if (scorePlayer < scoreComputer && gameTurn == "cpuStand" || gameTurn == "cpuHit") {
-    return `Computer wins! <br> Player Score: ${playerScore} <br> Computer Score: ${computerScore}`;
-  }
-  // prettier-ignore
-  if (scorePlayer > scoreComputer && gameTurn == "cpuStand" || gameTurn == "cpuHit") {
-    return `Player wins! <br> Player Score: ${playerScore} <br> Computer Score: ${computerScore}`;
-  }
-  // prettier-ignore
 };
-// Hit function for player
+// Convert as many aces as possible without hand busting
+var convertAce = function (playerHand, playerArray) {
+  // Check if hand is bust
+  if (playerHand > 21) {
+    // if it busts, then convert the rank of aces from 11 to 1
+    for (let i = 0; i < playerArray.length; i++) {
+      if (playerArray[i].name == "Ace" && playerArray[i].rank == 11) {
+        playerArray[i].rank = 1;
+        // Update player hand here //
+        playerHand = playerHand - 1;
+      }
+      if (playerHand < 21) {
+        break;
+      }
+    }
+  }
+  return playerHand;
+};
+
 // functions - end
 // Main function - start
 var main = function (input) {
@@ -133,10 +154,20 @@ var main = function (input) {
     // Each player will be popped two cards from deck and store into array
     playerCardArray.push(shuffledDeck.pop());
     playerCardArray.push(shuffledDeck.pop());
+    // converting aces into 11 without messing up the deck for player
+    for (let i = 0; i < playerCardArray.length; i++) {
+      if (playerCardArray[i].name == "Ace") {
+        playerCardArray[i].rank = 11;
+      }
+    }
     computerCardArray.push(shuffledDeck.pop());
     computerCardArray.push(shuffledDeck.pop());
-    console.log(playerCardArray, "lPCA");
-    console.log(computerCardArray, "CCA");
+    // converting aces into 11 without messing up deck for computer
+    for (let i = 0; i < computerCardArray.length; i++) {
+      if (computerCardArray[i].name == "Ace") {
+        computerCardArray[i].rank = 11;
+      }
+    }
     // Retrieve Card Ranks from Player and CPU array & update into scoreArray
     playerScoreArray[0] = playerCardArray[0].rank;
     playerScoreArray[1] = playerCardArray[1].rank;
@@ -146,6 +177,9 @@ var main = function (input) {
     playerScore = sumArray(playerScoreArray);
     computerScore = sumArray(computerScoreArray);
     console.log(playerScore, computerScore);
+    // Under presence of ACE AND BUST then - 10 from player score until no bust.
+    convertAce(playerScore, playerCardArray);
+    convertAce(computerScore, computerCardArray);
     // End of Draw Phase
     return checkConditions(playerScore, computerScore);
   }
@@ -154,7 +188,6 @@ var main = function (input) {
     playerHitCounter = playerHitCounter + 1;
     playerCardArray.push(shuffledDeck.pop());
     playerScoreArray[playerHitCounter] = playerCardArray[playerHitCounter].rank;
-    console.log(playerCardArray[playerHitCounter].rank), "149";
     playerScore = sumArray(playerScoreArray);
     console.log(playerScore);
     return `Player drew a ${playerCardArray[playerHitCounter].name} of ${
@@ -165,9 +198,20 @@ var main = function (input) {
   if ((input == "stand") & (computerScore < 17)) {
     gameTurn = "cpuHit";
     computerCardArray.push(shuffledDeck.pop());
+    // converting aces to 11s without messing up the deck
+    for (let i = 0; i < playerCardArray.length; i++) {
+      if (playerCardArray[i].name == "Ace") {
+        playerCardArray[i].rank = 11;
+      }
+    }
+    for (let i = 0; i < computerCardArray.length; i++) {
+      if (computerCardArray[i].name == "Ace") {
+        computerCardArray[i].rank = 11;
+      }
+    }
     computerScoreArray[2] = computerCardArray[2].rank;
-    computerScore = sumArray(playerScoreArray);
-    console.log(computerScore, `stand<17`);
+    computerScore = sumArray(computerScoreArray);
+    convertAce(computerScore, computerCardArray);
     return `Player chose to stand. <br> Computer has to hit, and drew ${
       computerCardArray[2].name
     } of ${computerCardArray[2].suit} <br>
@@ -183,8 +227,6 @@ var main = function (input) {
   }
 };
 // Main function - end
-// If dealer <17 immediate hit.
-// If hand total higher than 21, immediate bust
 
 // //Global Variables // //
 // deckArray
@@ -202,4 +244,4 @@ var computerScore = 0;
 // HitCounter
 var playerHitCounter = 1;
 var cpuHitCounter = 1;
-// Global Variables - End //
+// Global Variables - End
